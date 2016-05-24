@@ -73,6 +73,9 @@ int main()
     unsigned char var[4];//for saving 4bytes raw data
 
     std::ofstream speed_data("speed_data.txt",std::ios::out);//open a file named"speed_record.txt" to record the encoder data.
+    if(!speed_data){
+        std::cout<<"Creat speed_data.txt error!"<<std::endl;
+    }
     write (encoder,A5A5 , 2);
     usleep (3000);
     clock_t start;//用于后面循环的定时，使得刷新周期稳定保持在10ms

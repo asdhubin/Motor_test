@@ -7,11 +7,14 @@
 #include <string.h>
 #include <math.h>
 #include <ctime>
+#include<pthread.h>//多线程
 
+//下面是自己写的头文件
 #include "AQMD3620NS-A.h"
 #include "serialport.h"
+#include "odometer.h"
 
-#define portname  "/dev/ttyUSB0"
+
 int main()
 {
     int motor = open ("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NDELAY);
@@ -44,15 +47,19 @@ int main()
     }
     // implied else, set_blocking successful
 
-    //main part of the programe,type 'j' to speed up;type 'k' to speed down;type an integer between -2000~2000 to set speed straightly.
+    //Following are main part of the programe,type 'j' to speed up;type 'k' to speed down;type an integer between -2000~2000 to set speed straightly.
     //To make the motor stop, you can type in any word except ‘j' 'k' and number. For example, 'p' or '$%*&gkjfd' or only a whitespace.
     //You can type in "exit" to exit.
+
+
+
+
+
+
     std::cout<<"input an integer to set initial speed,input 'j' to speed up;'k' to speed down;\n \"exit\" to exit;any other input will stop."<<std::endl;
     char adjust_in[10];
     int speed=0;
-
     while(1){
-
         std::cin>>adjust_in;
         //printf("input is %s \n",adjust_in);
         if     (adjust_in[0]=='j'){speed++;printf("speed is %d\n",speed);}

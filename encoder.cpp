@@ -86,7 +86,7 @@ int main()
         start = clock();//起始时间
         if( 6> read (encoder, receivebuffer, sizeof receivebuffer) ){ // then read failed
             return -1;
-            break;
+
         }
         /*printf("value of buffer is %2d %2d %2d %2d %2d %2d \n\n",
         receivebuffer[0],

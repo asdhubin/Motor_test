@@ -100,26 +100,34 @@ void *encoder_thread(void* args ){
         receivebuffer[4],
         receivebuffer[5]
         );*/  //here is test output,output like E1 9B FE FF FF 79
+        int skip=0;//接收数据校验不通过，skip+1,表示跳过一次循环
         for(int i=0;i<4;i++){
             var[i]=receivebuffer[i+1];
         }
         write (encoder,A5A5 , 2);
         old_data=new_data;
-        if(receivebuffer[5]!=receivebuffer[0]+receivebuffer[1]+receivebuffer[2]+receivebuffer[3]+receivebuffer[4]){
-            continue;
+        if(receivebuffer[5]=receivebuffer[0]+receivebuffer[1]+receivebuffer[2]+receivebuffer[3]+receivebuffer[4]){
+
+
+            new_data=(var[3]<<24)|(var[2]<<16)|(var[1]<<8)|(var[0]);
+            //Following is the main part to record the distance the car moved in the duration T.
+            delta=(new_data-old_data)*(-1);//our odometer is not properly  installed, it decrease when move forward.
+            encoder001.odo_add_mm(delta/revolution);
+            std::cout<<"Odometer show speed is"<<delta/revolution/T<<std::endl;//10ms=0.01s
+            encoder001.odo_print();
+            speed_data<<start<<"    "<<delta/revolution/T/(skip+1)<<std::endl;
+            skip=0;
+            duration = ( clock() - start ) / (double) CLOCKS_PER_SEC;//一次循环计算所花费的时间
+            usleep(T*1000000-duration*1000000);//等待满10ms
+            pthread_mutex_lock(&stop_all_program_mutex);
         }
-        new_data=(var[3]<<24)|(var[2]<<16)|(var[1]<<8)|(var[0]);
-        //Following is the main part to record the distance the car moved in the duration T.
-        delta=(new_data-old_data)*(-1);//our odometer is not properly  installed, it decrease when move forward.
-        encoder001.odo_add_mm(delta/revolution);
-        std::cout<<"Odometer show speed is"<<delta/revolution/T<<std::endl;//10ms=0.01s
-        encoder001.odo_print();
-        speed_data<<start<<"    "<<delta/revolution/T<<std::endl;
+        else{
+            skip++;
+            duration = ( clock() - start ) / (double) CLOCKS_PER_SEC;//一次循环计算所花费的时间
+            usleep(T*1000000-duration*1000000);
 
+        }
 
-        duration = ( clock() - start ) / (double) CLOCKS_PER_SEC;//一次循环计算所花费的时间
-        usleep(T*1000000-duration*1000000);//等待满10ms
-        pthread_mutex_lock(&stop_all_program_mutex);
     }
     pthread_mutex_unlock(&stop_all_program_mutex);
 
@@ -193,11 +201,13 @@ int main()
         set_speed(motor,speed);
         usleep(3000);
     }*/
-    for(int i=0;i<=20;i++){
+    for(int i=0;i<=10;i++){
 
         speed=i*20;
         set_speed(motor,speed);
-        usleep(10*1000000);
+        usleep(2*10*1000000);
+        set_speed(motor,0);
+        usleep(2*1000000);
     }
     //clean up
 

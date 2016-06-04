@@ -16,8 +16,10 @@
 #include "odometer.h"
 
 extern int stop_all_program =0;
+extern short speed=0;
+extern motor_address;
 pthread_mutex_t   stop_all_program_mutex;//互斥锁，encoder每次循环时要判断stop_all_programe的值，为1时终止线程
-
+pthread_mutex_t   speed_mutex;
 
 void *encoder_thread(void* args ){
     int revolution=1000;//every 1000 of encoder number is 1mm
@@ -70,7 +72,7 @@ void *encoder_thread(void* args ){
     //initialize parameter
     unsigned char A5A5[2];A5A5[0]=0xA5;A5A5[1]=0xA5;
 
-    int old_data=0;int new_data=0;
+    int old_data=0;int new_data=0;int32_t delta1;
     float delta;
     class odometer encoder001;
     unsigned char var[4];//for saving 4bytes raw data
@@ -83,6 +85,7 @@ void *encoder_thread(void* args ){
     usleep (3000);
     clock_t start;//用于后面循环的定时，使得刷新周期稳定保持在10ms
     double duration;
+    short protection_count;//protect the car if the odometer broke down.
 
     pthread_mutex_lock(&stop_all_program_mutex);
     while(stop_all_program ==0){
@@ -110,7 +113,24 @@ void *encoder_thread(void* args ){
         }
         new_data=(var[3]<<24)|(var[2]<<16)|(var[1]<<8)|(var[0]);
         //Following is the main part to record the distance the car moved in the duration T.
-        delta=(new_data-old_data)*(-1);//our odometer is not properly  installed, it decrease when move forward.
+        delta1=(new_data-old_data)*(-1);//our odometer is not properly  installed, it decrease when move forward.
+        delta=delta1;
+        //protection module begin
+        if(speed!=0 and abs(delta1)<2 ){
+            protection_count++;
+        }
+        else{protection_count=0;}//如果连续4次里程计显示速度不为0,但速度为0，可能是编码器皮带断裂或者小车撞上了，此时立刻停止电机并输出警报。
+        if(protection_count>3){
+            pthread_mutex_lock(&stop_all_program_mutex);
+            stop_all_program=1;
+            std::cout<<"speed data is abnormal!Stop the car and check out!!"<<std::endl;
+            set_speed(motor_address,0);
+            usleep(2*1000000);
+            break;
+        }
+
+        //protection module end
+
         encoder001.odo_add_mm(delta/revolution);
         std::cout<<"Odometer show speed is"<<delta/revolution/T<<std::endl;//10ms=0.01s
         encoder001.odo_print();
@@ -136,9 +156,10 @@ int main()
 
 /*-------------------------------motor programe-------------------------------------------*/
     int motor = open ("/dev/ttyUSB1", O_RDWR | O_NOCTTY | O_NDELAY);
-        std::cout<<"hello01"<<std::endl;
+        std::cout<<"motor connecting"<<std::endl;
+    int motor_address=motor;//用来把电机参数传递给里程计线程
     if (motor < 0)
-    {
+    {pthread_mutex_lock(&stop_all_program_mutex);
         printf("error opening the device\n");
     }
 
@@ -171,23 +192,34 @@ int main()
 
     std::cout<<"input an integer to set initial speed,input 'j' to speed up;'k' to speed down;\n \"exit\" to exit;any other input will stop."<<std::endl;
     char adjust_in[10];//get user's input and analysis it
-    short speed=0;
-    while(1){
- std::cout<<"input an integer to set initial speed,input 'j' to speed up;'k' to speed down;\n \"exit\" to exit;any other input will stop."<<std::endl;
-    char adjust_in[10];
-    int speed=0;
+
+    //while(1){
+    //std::cout<<"input an integer to set initial speed,input 'j' to speed up;'k' to speed down;\n \"exit\" to exit;any other input will stop."<<std::endl;
+    //char adjust_in[10];
+    //int speed=0;
     while(1){
         std::cin>>adjust_in;
         //printf("input is %s \n",adjust_in);
-        if     (adjust_in[0]=='j'){speed++;printf("speed is %d\n",speed);}
-        else if(adjust_in[0]=='k'){speed--;printf("speed is %d\n",speed);}
+        if (adjust_in[0]=='j'){
+            pthread_mutex_lock(&speed_mutex);
+            speed++;
+            pthread_mutex_unlock(&speed_mutex);
+            printf("speed is %d\n",speed);
+            }
+        else if(adjust_in[0]=='k'){
+            pthread_mutex_lock(&speed_mutex);
+            speed--;
+            pthread_mutex_unlock(&speed_mutex);
+            printf("speed is %d\n",speed);}
         else if(0==strcmp(adjust_in,"exit")){break;}
         else if((adjust_in[0]>='0' and adjust_in[0]<='9' ) or adjust_in[0]=='-'){
             sscanf(adjust_in,"%d",&speed);
             printf("set speed %d\n",speed);
         }
         else{
+            pthread_mutex_lock(&speed_mutex);
             speed=0;
+            pthread_mutex_unlock(&speed_mutex);
             std::cout<<"the motor has stopped\n"<<std::endl;
         }
         set_speed(motor,speed);
@@ -204,5 +236,5 @@ int main()
     //close the serial port of motor
     tcsetattr (motor, TCSANOW, &oldtty);
     return 0;
-}
+//}
 }

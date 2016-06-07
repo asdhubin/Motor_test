@@ -17,25 +17,25 @@
 
 extern int stop_all_program =0;
 extern short speed=0;
-extern motor_address;
+extern int motor_address;
 pthread_mutex_t   stop_all_program_mutex;//互斥锁，encoder每次循环时要判断stop_all_programe的值，为1时终止线程
 pthread_mutex_t   speed_mutex;
 
 void *encoder_thread(void* args ){
     float revolution=3.74587458;//every 3.7458 of encoder number is 1mm
     float T=0.5;//T的单位是秒，这里表示每500ms循环一次，读取编码器的计数器的数值。
-    int encoder = open ("/dev/ttyUSB2", O_RDWR | O_NOCTTY | O_SYNC);
-
+    int encoder = open ("/dev/ttyUSB1", O_RDWR | O_NOCTTY | O_SYNC);
+    int motor_address;
     if (encoder < 0)
     {
-        printf("error opening the device\n");
+        printf("error opening the device1\n");
     }
 
 
     /*CHANGES*/
     if(set_interface_attribs(encoder, B9600, 0,1)!=0)
     {            printf("hello");
-        printf("error set interface\n");
+        printf("error set interface1\n");
     }
 
     else
@@ -43,7 +43,7 @@ void *encoder_thread(void* args ){
 
     if(set_blocking(encoder, 0)!=0)
     {
-        printf("error set blocking\n");
+        printf("error set blocking1\n");
     }
 
     else
@@ -132,7 +132,7 @@ void *encoder_thread(void* args ){
         //protection module end
 
         encoder001.odo_add_mm(delta/revolution);
-        std::cout<<"Odometer show speed is"<<delta/revolution/T<<std::endl;//10ms=0.01s
+        std::cout<<"Odometer show speed is"<<delta/revolution/T/1000<<"m/s"<<std::endl;//10ms=0.01s
         encoder001.odo_print();
         speed_data<<start<<"    "<<delta/revolution/T<<std::endl;
 
@@ -152,25 +152,26 @@ int main()
 {
 
     pthread_t odo;
-    pthread_create(&odo,NULL,encoder_thread,NULL);//开启里程计线程
+
 
 /*-------------------------------motor programe-------------------------------------------*/
-    int motor = open ("/dev/ttyUSB1", O_RDWR | O_NOCTTY | O_NDELAY);
+    int motor = open ("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NDELAY);
         std::cout<<"motor connecting"<<std::endl;
     int motor_address=motor;//用来把电机参数传递给里程计线程
+    pthread_create(&odo,NULL,encoder_thread,NULL);//开启里程计线程
     if (motor < 0)
     {pthread_mutex_lock(&stop_all_program_mutex);
-        printf("error opening the device\n");
+        printf("error opening the device0\n");
     }
 
     if(set_interface_attribs(motor, B9600, 0,2)!=0)//此处有修改，stopbit is 2bit
     {            printf("hello");
-        printf("error set interface\n");
+        printf("error set interface0\n");
     }
     else
     if(set_blocking(motor, 0)!=0)
     {
-        printf("error set blocking\n");
+        printf("error set blocking0\n");
     }
     else
         printf("done\n");
@@ -222,7 +223,7 @@ int main()
             pthread_mutex_unlock(&speed_mutex);
             std::cout<<"the motor has stopped\n"<<std::endl;
         }
-        set_speed(motor,speed);
+        set_speed(motor,-speed);
         usleep(3000);
     }
     //clean up

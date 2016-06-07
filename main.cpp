@@ -22,7 +22,7 @@ pthread_mutex_t   stop_all_program_mutex;//互斥锁，encoder每次循环时要
 pthread_mutex_t   speed_mutex;
 
 void *encoder_thread(void* args ){
-    int revolution=1000;//every 1000 of encoder number is 1mm
+    float revolution=3.74587458;//every 3.7458 of encoder number is 1mm
     float T=0.5;//T的单位是秒，这里表示每500ms循环一次，读取编码器的计数器的数值。
     int encoder = open ("/dev/ttyUSB2", O_RDWR | O_NOCTTY | O_SYNC);
 

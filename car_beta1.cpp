@@ -122,14 +122,14 @@ int main(){
         printf("\033[4mpress white space to stop,press q to exit.\033[0m\n");
         //printf("%x hahaha\n",temp);
             switch(temp){
-            case KEY_LEFT:  if(direction<=30 and direction>=-20){
+            case KEY_LEFT:  if(direction<=40 and direction>=-30){
                                 set_direction_and_start_frequency(stepper,1,50);//设定方向
                                 usleep(800000);
                                 if(0==run_stepper(stepper)){direction=direction-10;};//前轮转向
                             }
                         else printf("\033[31;1;5m%s\033[0m \n","Left  limited");
                         break;
-            case KEY_RIGHT:  if(direction<=20 and direction>=-30){
+            case KEY_RIGHT:  if(direction<=30 and direction>=-40){
                                 set_direction_and_start_frequency(stepper,0,50);//设定方向
                                 usleep(800000);
                                 if(0==run_stepper(stepper)){direction=direction+10;};//前轮转向

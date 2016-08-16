@@ -114,6 +114,8 @@ int main(){
     float direction=0;
     float speed=0;
     char temp=0;
+    char direction_temp=1;//方向标志，用于判断此次转向与上次转向是否相同，如果相同的话可以跳过步进电机旋转方向的设定，少运行一个命令使得响应速度提升。左为1，右为0.
+    //dirention_temp的初始值要与initialize_stepper()函数里的set_direction_and_start_frequency(stepper,1,50);严格保持一致。
     bool flag=true;
     printf("\033[4mpress white space to stop,press q to exit.\033[0m\n");
     do{
@@ -123,15 +125,21 @@ int main(){
         //printf("%x hahaha\n",temp);
             switch(temp){
             case KEY_LEFT:  if(direction<=40 and direction>=-30){
-                                set_direction_and_start_frequency(stepper,1,50);//设定方向
-                                usleep(800000);
+                            if(direction_temp!=1){
+                                    set_direction_and_start_frequency(stepper,1,50);//设定方向
+                                    usleep(800000);//经过测试，两条指令之间必须存在最短0.8s的间隔。原因尚不明确。
+                                    direction_temp=1;
+                            }
                                 if(0==run_stepper(stepper)){direction=direction-10;};//前轮转向
                             }
                         else printf("\033[31;1;5m%s\033[0m \n","Left  limited");
                         break;
             case KEY_RIGHT:  if(direction<=30 and direction>=-40){
-                                set_direction_and_start_frequency(stepper,0,50);//设定方向
-                                usleep(800000);
+                                if(direction_temp!=0){
+                                    set_direction_and_start_frequency(stepper,0,50);//设定方向
+                                    usleep(800000);
+                                    direction_temp=0;
+                                }
                                 if(0==run_stepper(stepper)){direction=direction+10;};//前轮转向
                              }
                         else printf("\033[31;1;5m%s\033[0m \n","Right limited");

@@ -7,14 +7,14 @@
 #include <fcntl.h>
 #include <string.h>
 #include <math.h>
-#include <ctime>//Ê±¼ä´Á
-#include <pthread.h>//¶àÏß³Ì
-//ÏÂÃæÊÇ×Ô¼ºĞ´µÄÍ·ÎÄ¼ş
+#include <ctime>//æ—¶é—´æˆ³
+#include <pthread.h>//å¤šçº¿ç¨‹
+//ä¸‹é¢æ˜¯è‡ªå·±å†™çš„å¤´æ–‡ä»¶
 #include "AQMD3620NS-A.h"
 #include "serialport.h"
 #include "odometer.h"
 #include "stepper_controller.h"
-//°´¼ü¶¨Òå
+//æŒ‰é”®å®šä¹‰
 #define KEY_LEFT		0x44
 #define KEY_RIGHT		0x43
 #define KEY_UP          0x41
@@ -22,7 +22,7 @@
 #define WHITE_SPACE     0x20
 #define q               0x71
 
-//WindowsÖĞµÄgetch()ÔÚLinuxµÄÊµÏÖ
+//Windowsä¸­çš„getch()åœ¨Linuxçš„å®ç°
 char getch(){
     char buf=0;
     struct termios old={0};
@@ -68,10 +68,10 @@ set_stepper_address(stepper,3);
     printf("press enter\n");std::cin.get();
 }
 int main(){
-    /*----------------------------Á¬½Ó²½½øµç»ú-----------------------------------*/
+    /*----------------------------è¿æ¥æ­¥è¿›ç”µæœº-----------------------------------*/
     int stepper = open ("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NDELAY);
     if (stepper < 0){printf("error opening the stepper\n");}
-    if(set_interface_attribs(stepper, B9600, 0,1)!=0){//´Ë´¦stopbit is 1 bit
+    if(set_interface_attribs(stepper, B9600, 0,1)!=0){//æ­¤å¤„stopbit is 1 bit
             printf("error set stepper interface\n");
     }
     else if(set_blocking(stepper, 0)!=0){
@@ -84,14 +84,14 @@ int main(){
     if( set_blocking (stepper, 0) ) {               // set no blocking
         return -1;
     }
-    /*----------------------------½áÊøÁ¬½Ó²½½øµç»ú-------------------------------*/
-    /*----------------------------Á¬½ÓÖ±Á÷µç»ú--------------------------------------*/
+    /*----------------------------ç»“æŸè¿æ¥æ­¥è¿›ç”µæœº-------------------------------*/
+    /*----------------------------è¿æ¥ç›´æµç”µæœº--------------------------------------*/
     int motor = open ("/dev/ttyUSB1", O_RDWR | O_NOCTTY | O_NDELAY);
     if (motor < 0)
     {
         printf("error opening the DC motor.\n");
     }
-    if(set_interface_attribs(motor, B9600, 0,2)!=0){//´Ë´¦ÓĞĞŞ¸Ä£¬stopbit is 2bit
+    if(set_interface_attribs(motor, B9600, 0,2)!=0){//æ­¤å¤„æœ‰ä¿®æ”¹ï¼Œstopbit is 2bit
         printf("error set DC motor interface\n");
     }
     else if(set_blocking(motor, 0)!=0){
@@ -105,17 +105,17 @@ int main(){
     if( set_blocking (motor, 0) ) {// set no blocking
         return -1;
     }
-    /*----------------------------½áÊøÁ¬½ÓÖ±Á÷µç»ú-------------------------------*/
-    /*-------------------Éè¶¨²½½øµç»ú²ÎÊı-----------------------*/
+    /*----------------------------ç»“æŸè¿æ¥ç›´æµç”µæœº-------------------------------*/
+    /*-------------------è®¾å®šæ­¥è¿›ç”µæœºå‚æ•°-----------------------*/
     initialize_stepper(stepper);
-    /*-------------------Éè¶¨²½½øµç»ú²ÎÊı½áÊø-----------------------*/
+    /*-------------------è®¾å®šæ­¥è¿›ç”µæœºå‚æ•°ç»“æŸ-----------------------*/
 
 
     float direction=0;
     float speed=0;
     char temp=0;
-    char direction_temp=1;//·½Ïò±êÖ¾£¬ÓÃÓÚÅĞ¶Ï´Ë´Î×ªÏòÓëÉÏ´Î×ªÏòÊÇ·ñÏàÍ¬£¬Èç¹ûÏàÍ¬µÄ»°¿ÉÒÔÌø¹ı²½½øµç»úĞı×ª·½ÏòµÄÉè¶¨£¬ÉÙÔËĞĞÒ»¸öÃüÁîÊ¹µÃÏìÓ¦ËÙ¶ÈÌáÉı¡£×óÎª1£¬ÓÒÎª0.
-    //dirention_tempµÄ³õÊ¼ÖµÒªÓëinitialize_stepper()º¯ÊıÀïµÄset_direction_and_start_frequency(stepper,1,50);ÑÏ¸ñ±£³ÖÒ»ÖÂ¡£
+    char direction_temp=1;//æ–¹å‘æ ‡å¿—ï¼Œç”¨äºåˆ¤æ–­æ­¤æ¬¡è½¬å‘ä¸ä¸Šæ¬¡è½¬å‘æ˜¯å¦ç›¸åŒï¼Œå¦‚æœç›¸åŒçš„è¯å¯ä»¥è·³è¿‡æ­¥è¿›ç”µæœºæ—‹è½¬æ–¹å‘çš„è®¾å®šï¼Œå°‘è¿è¡Œä¸€ä¸ªå‘½ä»¤ä½¿å¾—å“åº”é€Ÿåº¦æå‡ã€‚å·¦ä¸º1ï¼Œå³ä¸º0.
+    //dirention_tempçš„åˆå§‹å€¼è¦ä¸initialize_stepper()å‡½æ•°é‡Œçš„set_direction_and_start_frequency(stepper,1,50);ä¸¥æ ¼ä¿æŒä¸€è‡´ã€‚
     bool flag=true;
     printf("\033[4mpress white space to stop,press q to exit.\033[0m\n");
     do{
@@ -126,21 +126,21 @@ int main(){
             switch(temp){
             case KEY_LEFT:  if(direction<=40 and direction>=-30){
                             if(direction_temp!=1){
-                                    set_direction_and_start_frequency(stepper,1,50);//Éè¶¨·½Ïò
-                                    usleep(800000);//¾­¹ı²âÊÔ£¬Á½ÌõÖ¸ÁîÖ®¼ä±ØĞë´æÔÚ×î¶Ì0.8sµÄ¼ä¸ô¡£Ô­ÒòÉĞ²»Ã÷È·¡£
+                                    set_direction_and_start_frequency(stepper,1,50);//è®¾å®šæ–¹å‘
+                                    //usleep(800000);//ç»è¿‡æµ‹è¯•ï¼Œä¸¤æ¡æŒ‡ä»¤ä¹‹é—´å¿…é¡»å­˜åœ¨æœ€çŸ­0.8sçš„é—´éš”ã€‚è´­ä¹°æ–°ç‰ˆæ§åˆ¶å™¨ä¹‹åé—®é¢˜å·²ç»è§£å†³ã€‚
                                     direction_temp=1;
                             }
-                                if(0==run_stepper(stepper)){direction=direction-10;};//Ç°ÂÖ×ªÏò
+                                if(0==run_stepper(stepper)){direction=direction-10;};//å‰è½®è½¬å‘
                             }
                         else printf("\033[31;1;5m%s\033[0m \n","Left  limited");
                         break;
             case KEY_RIGHT:  if(direction<=30 and direction>=-40){
                                 if(direction_temp!=0){
-                                    set_direction_and_start_frequency(stepper,0,50);//Éè¶¨·½Ïò
-                                    usleep(800000);
+                                    set_direction_and_start_frequency(stepper,0,50);//è®¾å®šæ–¹å‘
+                                    //usleep(800000);
                                     direction_temp=0;
                                 }
-                                if(0==run_stepper(stepper)){direction=direction+10;};//Ç°ÂÖ×ªÏò
+                                if(0==run_stepper(stepper)){direction=direction+10;};//å‰è½®è½¬å‘
                              }
                         else printf("\033[31;1;5m%s\033[0m \n","Right limited");
                         break;
@@ -166,7 +166,7 @@ int main(){
             case q:
                         speed=0;
                         set_speed(motor,0);
-                        flag=false;//ÍË³ö±êÖ¾
+                        flag=false;//é€€å‡ºæ ‡å¿—
                         printf("exit.\n");
                         break;
             }
